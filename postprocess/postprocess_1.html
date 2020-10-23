@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Marker Based AR with AR.js and Three.js</title>
+    <!-- 説明1 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/3.1.0/three.js/build/ar.js"></script>
+  </head>
+  <body>
+    <script>
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true
+      });
+      // 説明2
+      renderer.setClearColor(new THREE.Color(), 0);
+      renderer.setSize(640, 480);
+      renderer.domElement.style.position = 'absolute';
+      renderer.domElement.style.top = '0px';
+      renderer.domElement.style.left = '0px';
+      document.body.appendChild(renderer.domElement);
+
+      // 説明3
+      const scene = new THREE.Scene();
+      scene.visible = false;
+      const camera = new THREE.Camera();
+      scene.add(camera);
+
+      // 説明4
+      const arToolkitSource = new THREEx.ArToolkitSource({
+        sourceType: 'webcam'
+      });
+
+      arToolkitSource.init(() => {
+        setTimeout(() => {
+          onResize();
+        }, 2000);
+      });
+
+      addEventListener('resize', () => {
+        onResize();
+      });
+
+      // 説明5
+      function onResize() {
+        arToolkitSource.onResizeElement();
+        arToolkitSource.copyElementSizeTo(renderer.domElement);
+        if (arToolkitContext.arController !== null) {
+          arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
+        }
+      };
+
+      // 説明6
+      const arToolkitContext = new THREEx.ArToolkitContext({
+        cameraParametersUrl: 'data/camera_para.dat',
+        detectionMode: 'mono'
+      });
+
+      arToolkitContext.init(() => {
+        camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+      });
+
+      // 説明7
+      const arMarkerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
+        type: 'pattern',
+        patternUrl: 'data/patt.hiro',
+        changeMatrixMode: 'cameraTransformMatrix'
+      });
+
+      // 説明8
+      const mesh = new THREE.Mesh(
+        new THREE.TorusGeometry(1, 0.5, 64, 100),
+        new THREE.MeshNormalMaterial(),
+      );
+      mesh.position.y = 1.0;
+      scene.add(mesh);
+
+      // 説明9
+      const clock = new THREE.Clock();
+      requestAnimationFrame(function animate(){
+        requestAnimationFrame(animate);
+        if (arToolkitSource.ready) {
+          arToolkitContext.update(arToolkitSource.domElement);
+          scene.visible = camera.visible;
+        }
+        const delta = clock.getDelta();
+        mesh.rotation.x += delta * 1.0;
+        mesh.rotation.y += delta * 1.5; 
+        renderer.render(scene, camera);
+      });
+    </script>
+  </body>
+</html>
